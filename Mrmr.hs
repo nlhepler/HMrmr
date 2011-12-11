@@ -41,12 +41,14 @@ data MrmrMethod = MID | MIQ deriving (Eq, Show)
 doMrmr :: Int -> MrmrMethod -> V.Vector ( U.Vector Int ) -> U.Vector Int -> (U.Vector (Int, Double), U.Vector (Int, Double))
 doMrmr k method cols ys = (imaxrels, mrmrRecurser (k - 1) method n xcls imaxrels $ U.singleton . U.maximumBy (compare `on` snd) $ imaxrels)
     where
-        n = fromIntegral . U.length $ ys
+        n               = fromIntegral . U.length $ ys
+        imarginals :: U.Vector Int -> [Int] -> [(Int, Double)]
         imarginals vals = map (\i -> (i, fromIntegral ( U.foldl' (\l r -> if r == i then l + 1 else l) 0 vals ) / n))
-        classprobs vals = imarginals vals $ IntSet.elems . IntSet.fromList . U.toList $ vals
-        ycls = (ys, classprobs ys)
-        xcls = V.zip cols $ V.map classprobs cols
-        imaxrels = U.zip (U.enumFromN 0 $ U.length maxrels) maxrels
+        classmargs :: U.Vector Int -> [(Int, Double)]
+        classmargs vals = imarginals vals $ IntSet.elems . IntSet.fromList . U.toList $ vals
+        ycls            = (ys, classmargs ys)
+        xcls            = V.zip cols $ V.map classmargs cols
+        imaxrels        = U.zip (U.enumFromN 0 $ U.length maxrels) maxrels
             where
                 maxrels = maxRel n xcls ycls
 
@@ -79,15 +81,15 @@ mrmrVal method n xcls i maxrel mrmrs
 parseCsv :: B.ByteString -> ([String], V.Vector ( U.Vector Int ), U.Vector Int)
 parseCsv input = (map B.unpack $ B.split ',' labels, cols, ys)
     where
-        cols = V.fromList coldata
-        ys:coldata = map U.fromList . transpose $ [ map readInt $ B.split ',' row | row <- rowdata ]
+        cols           = V.fromList coldata
+        ys:coldata     = map U.fromList . transpose $ [ map readInt $ B.split ',' row | row <- rowdata ]
         labels:rowdata = [ line | line <- B.lines input, line /= B.empty ]
 
 
 readInt :: B.ByteString -> Int
 readInt str = case B.readInt str of
     Just (v, _) -> v
-    Nothing -> error "non-integer value is unparseable"
+    Nothing     -> error "non-integer value is unparseable"
 
 
 main = do
