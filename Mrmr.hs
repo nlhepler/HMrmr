@@ -61,10 +61,9 @@ mrmrNextIdx :: MrmrMethod -> Double -> V.Vector ValueClassMarginal -> U.Vector (
 mrmrNextIdx method n xcls maxrels mrmrs =
     U.foldl1' folder maxrels
     where
-        folder l (i, maxrel) =
-            if U.elem i ( U.map fst mrmrs ) || val <= snd l
-            then l
-            else (i, val)
+        folder l (i, maxrel)
+            | U.elem i ( U.map fst mrmrs ) || val <= snd l = l
+            | otherwise                                    = (i, val)
             where
                 val = mrmrVal method n xcls i maxrel mrmrs
 
