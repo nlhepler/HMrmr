@@ -18,7 +18,7 @@ type ValueClassMarginal = (U.Vector Int, [(Int, Double)])
 mutualInfoInnerLoop :: Double -> U.Vector (Int, Int) -> Double -> (Int, Int, Double) -> Double
 mutualInfoInnerLoop n xys !acc (!i, !j, !px_py)
     | n == 0 || px_py == 0 || pxy == 0 = acc
-    | otherwise                        = pxy * ( logBase 2 $ pxy / px_py ) + acc
+    | otherwise                        = pxy * logBase 2 ( pxy / px_py ) + acc
     where
         pxy = ( fromIntegral . U.foldl' accumEq2 0 $ xys ) / n
         accumEq2 :: Int -> (Int, Int) -> Int
@@ -82,7 +82,7 @@ parseCsv input = (map B.unpack $ B.split ',' labels, cols, ys)
     where
         cols = V.fromList coldata
         ys:coldata = map U.fromList . transpose $ [ map readInt $ B.split ',' row | row <- rowdata ]
-        labels:rowdata = [ line | line <- B.lines input, not $ line == B.empty ]
+        labels:rowdata = [ line | line <- B.lines input, line /= B.empty ]
 
 
 readInt :: B.ByteString -> Int
