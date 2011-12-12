@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# OPTIONS_GHC -O2 -fexcess-precision -funbox-strict-fields #-}
 
-import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Char8 as B
 import Data.Function (on)
 import Data.List (foldl', sortBy, transpose)
 import qualified Data.IntSet as IntSet
@@ -14,21 +14,20 @@ import Text.Printf
 type ValueClassMarginal = (U.Vector Int, [(Int, Double)])
 
 
-{-# NOINLINE mutualInfoInnerLoop #-}
 mutualInfoInnerLoop :: Double -> U.Vector (Int, Int) -> Double -> (Int, Int, Double) -> Double
 mutualInfoInnerLoop n xys !acc (!i, !j, !px_py)
-    | n == 0 || px_py == 0 || pxy == 0 = acc
-    | otherwise                        = pxy * logBase 2 ( pxy / px_py ) + acc
+    | px_py == 0 || pxy == 0 = acc
+    | otherwise              = pxy * logBase 2 ( pxy / px_py ) + acc
     where
-        pxy = ( fromIntegral . U.foldl' accumEq2 0 $ xys ) / n
-        accumEq2 :: Int -> (Int, Int) -> Int
-        accumEq2 !acc (!i', !j')
+        pxy = ( fromIntegral . U.foldl' (accumEq2 i j) 0 $ xys ) / n
+        accumEq2 :: Int -> Int -> Int -> (Int, Int) -> Int
+        accumEq2 !i !j !acc (!i', !j')
             | i' == i && j' == j = acc + 1
             | otherwise          = acc
 
 
 mutualInfo :: Double -> ValueClassMarginal -> ValueClassMarginal -> Double
-mutualInfo n (xs, xcp) (ys, ycp) = foldl' (mutualInfoInnerLoop n $ U.zip xs ys) 0 [ (i, j, px * py) | (!i, !px) <- xcp, (!j, !py) <- ycp ]
+mutualInfo n (xs, xcp) (ys, ycp) = foldl' ({-# SCC "mutualInfoInnerLoop" #-} mutualInfoInnerLoop n $ U.zip xs ys) 0 [ (i, j, px * py) | (!i, !px) <- xcp, (!j, !py) <- ycp ]
 
 
 maxRel :: Double -> V.Vector ValueClassMarginal -> ValueClassMarginal -> U.Vector Double
@@ -39,7 +38,9 @@ data MrmrMethod = MID | MIQ deriving (Eq, Show)
 
 
 doMrmr :: Int -> MrmrMethod -> V.Vector ( U.Vector Int ) -> U.Vector Int -> (U.Vector (Int, Double), U.Vector (Int, Double))
-doMrmr k method cols ys = (imaxrels, mrmrRecurser (k - 1) method n xcls imaxrels $ U.singleton . U.maximumBy (compare `on` snd) $ imaxrels)
+doMrmr k method cols ys
+    | n == 0    = (U.empty, U.empty)
+    | otherwise = (imaxrels, mrmrRecurser (k - 1) method n xcls imaxrels $ U.singleton . U.maximumBy (compare `on` snd) $ imaxrels)
     where
         n               = fromIntegral . U.length $ ys
         imarginals :: U.Vector Int -> [Int] -> [(Int, Double)]
@@ -63,11 +64,11 @@ mrmrNextIdx :: MrmrMethod -> Double -> V.Vector ValueClassMarginal -> U.Vector (
 mrmrNextIdx method n xcls maxrels mrmrs =
     U.foldl1' folder maxrels
     where
-        folder l (i, maxrel)
-            | U.elem i ( U.map fst mrmrs ) || val <= snd l = l
-            | otherwise                                    = (i, val)
+        folder l@(_, v) (i, maxrel)
+            | U.elem i ( U.map fst mrmrs ) || v' <= v = l
+            | otherwise                               = (i, v')
             where
-                val = mrmrVal method n xcls i maxrel mrmrs
+                v' = mrmrVal method n xcls i maxrel mrmrs
 
 
 mrmrVal :: MrmrMethod -> Double -> V.Vector ValueClassMarginal -> Int -> Double -> U.Vector (Int, Double) -> Double

@@ -1,4 +1,4 @@
-Name: mrmr
+Name: hmrmr
 Version: 0.0.1
 Description: minimum Redundancy Maximum Relevance feature selection in Haskell
 License: GPL-3
@@ -6,8 +6,8 @@ License-file: LICENSE
 Author: Lance Hepler
 Maintainer: nlhepler@gmail.com
 Build-Type: Simple
-Cabal-Version: >=1.8
+Cabal-Version: >= 1.8
 
-Executable mrmr
-  Main-is: Mrmr.hs
+Executable hmrmr
+  Main-is: HMrmr.hs
   Build-Depends: base >= 3.0 && < 5, bytestring >= 0.9, containers >= 0.4, vector >= 0.9
