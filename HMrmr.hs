@@ -19,9 +19,9 @@ mutualInfoInnerLoop n xys !acc (!i, !j, !px_py)
     | px_py == 0 || pxy == 0 = acc
     | otherwise              = pxy * logBase 2 ( pxy / px_py ) + acc
     where
-        pxy = ( fromIntegral . U.foldl' (accumEq2 i j) 0 $ xys ) / n
-        accumEq2 :: Int -> Int -> Int -> (Int, Int) -> Int
-        accumEq2 !i !j !acc (!i', !j')
+        pxy = ( fromIntegral . U.foldr' (accumEq2 i j) 0 $ xys ) / n
+        accumEq2 :: Int -> Int -> (Int, Int) -> Int -> Int
+        accumEq2 !i !j (!i', !j') !acc
             | i' == i && j' == j = acc + 1
             | otherwise          = acc
 
