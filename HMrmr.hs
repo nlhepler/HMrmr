@@ -62,7 +62,7 @@ mrmrRecurser k method n xcls maxrels mrmrs
 
 mrmrNextIdx :: MrmrMethod -> Double -> V.Vector ValueClassMarginal -> U.Vector (Int, Double) -> U.Vector (Int, Double) -> (Int, Double)
 mrmrNextIdx method n xcls maxrels mrmrs =
-    U.foldl1' folder maxrels
+    U.foldl' folder (0, 0) maxrels
     where
         folder l@(_, v) (i, maxrel)
             | U.elem i ( U.map fst mrmrs ) || v' <= v = l
@@ -76,7 +76,7 @@ mrmrVal method n xcls i maxrel mrmrs
     | method == MID = maxrel - mrmr
     | method == MIQ = maxrel / mrmr
     where
-        mrmr = U.foldl' (\l r -> mutualInfo n ( xcls V.! fst r ) ( xcls V.! i ) + l) 0 mrmrs / n
+        mrmr = U.foldl' (\l r -> mutualInfo n ( xcls V.! fst r ) ( xcls V.! i ) + l) 0 mrmrs / fromIntegral ( U.length mrmrs )
 
 
 parseCsv :: B.ByteString -> ([String], V.Vector ( U.Vector Int ), U.Vector Int)
