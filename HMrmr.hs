@@ -4,7 +4,7 @@
 import qualified Data.ByteString.Char8 as B
 import Data.Function (on)
 import Data.List (foldl', sortBy, transpose)
-import qualified Data.IntSet as IntSet
+import qualified Data.IntSet as S
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import System.Environment
@@ -43,12 +43,10 @@ doMrmr k method cols ys
     | otherwise = (imaxrels, mrmrRecurser (k - 1) method n xcls imaxrels $ U.singleton . U.maximumBy (compare `on` snd) $ imaxrels)
     where
         n               = fromIntegral . U.length $ ys
-        imarginals :: U.Vector Int -> [Int] -> [(Int, Double)]
-        imarginals vals = map (\i -> (i, fromIntegral ( U.foldl' (\l r -> if r == i then l + 1 else l) 0 vals ) / n))
-        classmargs :: U.Vector Int -> [(Int, Double)]
-        classmargs vals = imarginals vals $ IntSet.elems . IntSet.fromList . U.toList $ vals
-        ycls            = (ys, classmargs ys)
-        xcls            = V.zip cols $ V.map classmargs cols
+        imarginals :: U.Vector Int -> [(Int, Double)]
+        imarginals vals = map (\i -> (i, fromIntegral ( U.foldl' (\l r -> if r == i then l + 1 else l) 0 vals ) / n)) $ S.elems . S.fromList . U.toList $ vals
+        ycls            = (ys, imarginals ys)
+        xcls            = V.zip cols $ V.map imarginals cols
         imaxrels        = U.zip (U.enumFromN 0 $ U.length maxrels) maxrels
             where
                 maxrels = maxRel n xcls ycls
