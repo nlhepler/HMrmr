@@ -98,6 +98,6 @@ main = do
         let (labels, cols, ys) = parseCsv s
         let (maxrels, mrmrs) = doMrmr k MID cols ys
         printf "*** MaxRel features ***\n"
-        sequence_ [ printf "%d\t%s\t%.3f\n" ( idx + 1 ) ( labels !! ( idx + 1 ) ) maxrel | (idx, maxrel) <- take k . reverse . sortBy (compare `on` snd) . U.toList $ maxrels ]
+        sequence_ [ printf "%d\t%s\t%.3f\n" (idx + 1) (labels !! (idx + 1)) maxrel | (idx, maxrel) <- take k . reverse . sortBy (compare `on` snd) . U.toList $ maxrels ]
         printf "\n*** mRMR features ***\n"
-        sequence_ [ printf "%d\t%s\t%.3f\n" ( idx + 1 ) ( labels !! ( idx + 1 ) ) mrmr   | (idx, mrmr)   <- U.toList mrmrs   ]
+        sequence_ [ printf "%d\t%s\t%.3f\n" (idx + 1) (labels !! (idx + 1)) mrmr   | (idx, mrmr)   <- U.toList mrmrs ]
