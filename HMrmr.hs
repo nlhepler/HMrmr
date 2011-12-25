@@ -17,7 +17,7 @@ type ValueClassMarginal = (U.Vector Int, [(Int, Double)])
 mutualInfoInnerLoop :: Double -> U.Vector (Int, Int) -> Double -> (Int, Int, Double) -> Double
 mutualInfoInnerLoop n xys !acc (!i, !j, !px_py)
     | px_py == 0 || pxy == 0 = acc
-    | otherwise              = pxy * logBase 2 ( pxy / px_py ) + acc
+    | otherwise              = pxy * logBase 2 (pxy / px_py) + acc
     where
         pxy = ({-# SCC "foldr'" #-} fromIntegral . U.foldr' (accumEq2 i j) 0 $ xys ) / n
         accumEq2 :: Int -> Int -> (Int, Int) -> Int -> Int
@@ -37,14 +37,14 @@ maxRel n xcls ycls = U.generate (V.length xcls) (\i -> mutualInfo n (xcls V.! i)
 data MrmrMethod = MID | MIQ deriving (Eq, Show)
 
 
-doMrmr :: Int -> MrmrMethod -> V.Vector ( U.Vector Int ) -> U.Vector Int -> (U.Vector (Int, Double), U.Vector (Int, Double))
+doMrmr :: Int -> MrmrMethod -> V.Vector (U.Vector Int) -> U.Vector Int -> (U.Vector (Int, Double), U.Vector (Int, Double))
 doMrmr k method cols ys
     | n == 0    = (U.empty, U.empty)
     | otherwise = (imaxrels, mrmrRecurser (k - 1) method n xcls imaxrels $ U.singleton . U.maximumBy (compare `on` snd) $ imaxrels)
     where
         n               = fromIntegral . U.length $ ys
         imarginals :: U.Vector Int -> [(Int, Double)]
-        imarginals vals = map (\i -> (i, fromIntegral ( U.foldl' (\l r -> if r == i then l + 1 else l) 0 vals ) / n)) $ S.elems . S.fromList . U.toList $ vals
+        imarginals vals = map (\i -> (i, fromIntegral (U.foldl' (\l r -> if r == i then l + 1 else l) 0 vals) / n)) $ S.elems . S.fromList . U.toList $ vals
         ycls            = (ys, imarginals ys)
         xcls            = V.zip cols $ V.map imarginals cols
         imaxrels        = U.zip (U.enumFromN 0 $ U.length maxrels) maxrels
@@ -63,8 +63,8 @@ mrmrNextIdx method n xcls maxrels mrmrs =
     U.foldl' folder (0, 0) maxrels
     where
         folder l@(_, v) (i, maxrel)
-            | U.elem i ( U.map fst mrmrs ) || v' <= v = l
-            | otherwise                               = (i, v')
+            | U.elem i (U.map fst mrmrs) || v' <= v = l
+            | otherwise                             = (i, v')
             where
                 v' = mrmrVal method n xcls i maxrel mrmrs
 
@@ -74,10 +74,10 @@ mrmrVal method n xcls i maxrel mrmrs
     | method == MID = maxrel - mrmr
     | method == MIQ = maxrel / mrmr
     where
-        mrmr = U.foldl' (\l r -> mutualInfo n ( xcls V.! fst r ) ( xcls V.! i ) + l) 0 mrmrs / fromIntegral ( U.length mrmrs )
+        mrmr = U.foldl' (\l r -> mutualInfo n (xcls V.! fst r) (xcls V.! i) + l) 0 mrmrs / fromIntegral (U.length mrmrs)
 
 
-parseCsv :: B.ByteString -> ([String], V.Vector ( U.Vector Int ), U.Vector Int)
+parseCsv :: B.ByteString -> ([String], V.Vector (U.Vector Int), U.Vector Int)
 parseCsv input = (map B.unpack $ B.split ',' labels, cols, ys)
     where
         cols           = V.fromList coldata
